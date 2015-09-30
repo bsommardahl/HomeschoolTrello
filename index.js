@@ -53,7 +53,7 @@ function getMinutesFromCardName(name){
 
 function scheduleNewAlert(cardName, minutesForAlert, updateDate){
 	console.log("Scheduling alert for " + cardName + "...");
-	var alertDate = updateDate.add(minutesForAlert, 'seconds');
+	var alertDate = updateDate.add(minutesForAlert, 'minutes');
 	var j = schedule.scheduleJob(alertDate.toDate(), function(){
 		alertSlackThatClassIsFinished(cardName);
 	});    
