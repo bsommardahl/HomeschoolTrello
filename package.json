@@ -1,0 +1,29 @@
+{
+  "name": "homeschool-trello",
+  "version": "1.0.0",
+  "description": "A utility for making Trello work with Homeschooling.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bsommardahl/HomeschoolTrello.git"
+  },
+  "engines": {
+    "node": "0.12.7"
+  },
+  "author": "Acklen Avenue <info@acklenavenue.com> (http://acklenavenue.com/)",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/bsommardahl/HomeschoolTrello/issues"
+  },
+  "homepage": "https://github.com/bsommardahl/HomeschoolTrello#readme",
+  "dependencies": {
+    "body-parser": "^1.14.1",
+    "express": "^4.13.3",
+    "moment": "^2.10.6",
+    "node-schedule": "^0.2.9",
+    "node-slackr": "^0.1.1"
+  }
+}
