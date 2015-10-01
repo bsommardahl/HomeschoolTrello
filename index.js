@@ -119,7 +119,7 @@ function getSlack(){
 function alertSlackThatClassIsStarting(name, minutes){
 	console.log("Alerting alertSlackThatClassIsStarting for " + name + "...");	
 	var slack = getSlack();
-	var extra = endTime ? "I will remind you in `" + minutes + " minutes` when it is over." : " The class will be over when you finish."
+	var extra = minutes ? "I will remind you in `" + minutes + " minutes` when it is over." : " The class will be over when you finish."
 	slack.notify("\"" + name + "\" is starting now. " + extra, function(err, result){
 	    console.log("Message alertSlackThatClassIsStarting sent to slack.");	    
 	});
