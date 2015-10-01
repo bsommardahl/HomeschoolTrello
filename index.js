@@ -9,7 +9,13 @@ app.use(bodyParser.json());
 
 var port = process.env.PORT || 3000;
 
-var listToWatch = process.env.listToWatch;
+var trelloListDoing = process.env.trelloListDoing;
+var trelloListDone = process.env.trelloListDone;
+var trelloListToDo = process.env.trelloListToDo;
+var trelloDeveloperKey = process.env.trelloDeveloperKey;
+var trelloToken = process.env.trelloToken;
+var trelloBoardName = process.env.trelloBoardName;
+
 var slackIncomingUrl = process.env.slackIncomingUrl;
 var slackChannel = process.env.slackChannel;
 
@@ -22,7 +28,7 @@ app.post('/activity', function(req, res) {
   	var payload = req.body;
   	if(payload.action.type === "updateCard"
 		&& payload.action.data.listAfter
-		&& payload.action.data.listAfter.name === listToWatch)
+		&& payload.action.data.listAfter.name === trelloListDoing)
 	{
 		var cardName = payload.action.data.card.name;
   		var updateDate = moment(payload.action.date);
@@ -109,8 +115,43 @@ app.listen(port, function(){
 	console.log('Magic happens on port ' + port);
 });
 
+// ################################
+// TRELLO 
+// ################################
 
-//cron jobs
+var _ = require("underscore");
+var Trello = require("node-trello");
+var trello = new Trello(trelloDeveloperKey, trelloToken);
 
 // Every day at 5:00 am
-// move cards
+var j = schedule.scheduleJob({hour: 5, minute: 0, dayOfWeek: [1,2,3,4,5]}, function(){
+	moveCards();
+});
+
+function moveCards(){
+	console.log("Moving cards from " + trelloListDone + " to " + trelloListToDo + "...");
+	trello.get("/1/members/me/boards", function(err, allBoards) {
+	  if (err) throw err;
+	  var boardSummary = _.find(allBoards, function(b){return b.name===trelloBoardName});
+	  if(!boardSummary) throw new Error("Board not found.");
+	  var boardId = boardSummary.id;
+	  
+	  trello.get("/1/boards/" + boardId + "/lists", function(errboard, lists){
+  		if (errboard) throw errboard;
+  		var todayList = _.find(lists, function(l){return l.name==trelloListToDo});
+	  	if(!todayList) throw new Error("ToDo List not found.");
+  		var doneList = _.find(lists, function(l){return l.name==trelloListDone});
+		if(!doneList) throw new Error("Done List not found.");
+  		
+  		trello.get("/1/lists/" + doneList.id + "/cards", function(errCards, cards){
+			if (errCards) throw errCards;	  	
+			_.each(cards, function(c){
+				trello.put("/1/cards/" + c.id + "/idList", {value: todayList.id}, function(errMove, moveResult){
+					if (errMove) throw errMove;	  				
+					console.log("- " + c.name);
+				});	
+			})  			
+  		});
+	  });	  
+	});	
+};
