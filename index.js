@@ -19,6 +19,10 @@ var trelloBoardName = process.env.trelloBoardName;
 var slackIncomingUrl = process.env.slackIncomingUrl;
 var slackChannel = process.env.slackChannel;
 
+app.get('/', function(req, res){
+	res.json({message: "Hello!"});
+});
+
 app.head('/activity', function(req, res) {
 	res.json({message: "Hello!"});
 });
