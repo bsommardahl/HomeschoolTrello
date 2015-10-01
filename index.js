@@ -9,9 +9,9 @@ app.use(bodyParser.json());
 
 var port = process.env.PORT || 3000;
 
-var boardId = process.env.boardId;
 var listToWatch = process.env.listToWatch;
 var slackIncomingUrl = process.env.slackIncomingUrl;
+var slackChannel = process.env.slackChannel;
 
 app.head('/activity', function(req, res) {
 	res.json({message: "Hello!"});
@@ -26,13 +26,16 @@ app.post('/activity', function(req, res) {
 	{
 		var cardName = payload.action.data.card.name;
   		var updateDate = moment(payload.action.date);
-		var minutesForAlert = getMinutesFromCardName(cardName);		
+		var minutesForAlert = getMinutesFromCardName(cardName);	
+		var alertDate = false;
+
 		if(minutesForAlert){			
 			cardName = cardName.replace("["+minutesForAlert+"]","").trim();
-			scheduleNewAlert(cardName, minutesForAlert, updateDate);	
-			console.log("Reminder scheduled.");
+			alertDate = moment(updateDate).add(minutesForAlert, 'minutes');
+			scheduleAlertForEndOfClass(cardName, alertDate);				
 		}
-		alertSlackThatClassIsStarting(cardName, minutesForAlert);
+	
+		alertSlackThatClassIsStarting(cardName, alertDate);
 		console.log("Notified of start.");
 		res.json({ message: 'Thanks, Trello! Bye.' });   
 	}
@@ -51,18 +54,34 @@ function getMinutesFromCardName(name){
 	return parseInt(matches[1]);
 }
 
-function scheduleNewAlert(cardName, minutesForAlert, updateDate){
-	console.log("Scheduling alert for " + cardName + "...");
-	var alertDate = updateDate.add(minutesForAlert, 'minutes');
+function scheduleAlertForEndOfClass(cardName, alertDate){
+	console.log("End class alert scheduled.");	
 	var j = schedule.scheduleJob(alertDate.toDate(), function(){
 		alertSlackThatClassIsFinished(cardName);
-	});    
+	});    	
+	var minutesTillAlert = moment().diff(alertDate, 'minutes') * -1;	
+	var shouldWarn = minutesTillAlert > 15;
+	if(shouldWarn){
+		var warningDate = moment(alertDate).add(-5, 'minutes');	
+		var r = schedule.scheduleJob(warningDate.toDate(), function(){
+			alertSlackThatClassIsAlmostFinished(cardName);
+		});    
+		console.log("5-Minutes warning scheduled.");		
+	}
 }
 
 function alertSlackThatClassIsFinished(name){
 	console.log("Alerting alertSlackThatClassIsFinished for " + name + "...");	
 	var slack = getSlack();
-	slack.notify("\"" + name + "\" is over. Time for the next thing!", function(err, result){
+	slack.notify("\"" + name + "\" is *over*! Time for the next thing!", function(err, result){
+	    console.log("Message alertSlackThatClassIsFinished sent to slack.");	    
+	});
+}
+
+function alertSlackThatClassIsAlmostFinished(name){
+	console.log("Alerting alertSlackThatClassIsAlmostFinished for " + name + "...");	
+	var slack = getSlack();
+	slack.notify("\"" + name + "\" is ALMOST over. You have `5 minutes` left.", function(err, result){
 	    console.log("Message alertSlackThatClassIsFinished sent to slack.");	    
 	});
 }
@@ -70,17 +89,17 @@ function alertSlackThatClassIsFinished(name){
 function getSlack(){
 	var Slack = require('node-slackr');
 	var slack = new Slack(slackIncomingUrl,{
-	  channel: "#ema-school",
+	  channel: slackChannel,
 	  username: "school-bot",
 	  icon_url: "http://images.clipartpanda.com/bus-20clip-20art-school-bus4.png",	 
 	});
 	return slack;
 }
 
-function alertSlackThatClassIsStarting(name, minutes){
+function alertSlackThatClassIsStarting(name, endTime){
 	console.log("Alerting alertSlackThatClassIsStarting for " + name + "...");	
 	var slack = getSlack();
-	var extra = minutes ? "I will remind you in " + minutes + " minutes when it is over." : " The class will be over when you finish."
+	var extra = endTime ? "I will remind you at `" + endTime.format("h:mm a") + "` when it is over." : " The class will be over when you finish."
 	slack.notify("\"" + name + "\" is starting now. " + extra, function(err, result){
 	    console.log("Message alertSlackThatClassIsStarting sent to slack.");	    
 	});
@@ -89,6 +108,7 @@ function alertSlackThatClassIsStarting(name, minutes){
 app.listen(port, function(){
 	console.log('Magic happens on port ' + port);
 });
+
 
 //cron jobs
 
