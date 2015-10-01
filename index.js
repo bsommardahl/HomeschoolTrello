@@ -15,6 +15,7 @@ var trelloListToDo = process.env.trelloListToDo;
 var trelloDeveloperKey = process.env.trelloDeveloperKey;
 var trelloToken = process.env.trelloToken;
 var trelloBoardName = process.env.trelloBoardName;
+var timeZone = process.env.timeZone;
 
 var slackIncomingUrl = process.env.slackIncomingUrl;
 var slackChannel = process.env.slackChannel;
@@ -54,7 +55,7 @@ app.post('/activity', function(req, res) {
 			scheduleAlertForEndOfClass(cardName, alertDate);				
 		}
 	
-		alertSlackThatClassIsStarting(cardName, alertDate);
+		alertSlackThatClassIsStarting(cardName, minutesForAlert);
 		console.log("Notified of start.");
 		res.json({ message: 'Thanks, Trello! Bye.' });   
 	}
@@ -115,10 +116,10 @@ function getSlack(){
 	return slack;
 }
 
-function alertSlackThatClassIsStarting(name, endTime){
+function alertSlackThatClassIsStarting(name, minutes){
 	console.log("Alerting alertSlackThatClassIsStarting for " + name + "...");	
 	var slack = getSlack();
-	var extra = endTime ? "I will remind you at `" + endTime.format("h:mm a") + "` when it is over." : " The class will be over when you finish."
+	var extra = endTime ? "I will remind you in `" + minutes + " minutes` when it is over." : " The class will be over when you finish."
 	slack.notify("\"" + name + "\" is starting now. " + extra, function(err, result){
 	    console.log("Message alertSlackThatClassIsStarting sent to slack.");	    
 	});
