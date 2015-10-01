@@ -20,7 +20,16 @@ var slackIncomingUrl = process.env.slackIncomingUrl;
 var slackChannel = process.env.slackChannel;
 
 app.get('/', function(req, res){
-	res.json({message: "Hello!"});
+	res.json({
+		trelloListDoing: trelloListDoing ? "OK" : "Missing",
+		trelloListToDo: trelloListToDo ? "OK" : "Missing",
+		trelloListDone: trelloListDone ? "OK" : "Missing",
+		trelloBoardName: trelloBoardName ? "OK" : "Missing",
+		trelloDeveloperKey: trelloDeveloperKey ? "OK" : "Missing",
+		trelloToken: trelloToken ? "OK" : "Missing",
+		slackChannel: slackChannel ? "OK":"Missing",
+		slackIncomingUrl: slackIncomingUrl ? "OK" : "Missing"
+	});
 });
 
 app.head('/activity', function(req, res) {
